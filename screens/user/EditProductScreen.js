@@ -98,7 +98,7 @@ const EditProductScreen = props => {
         )
       );
     }
-    props.navigation.navigate('Products',{goBack: true});
+    props.navigation.goBack();
   }, [dispatch, prodId, formState]);
 
   useEffect(() => {
