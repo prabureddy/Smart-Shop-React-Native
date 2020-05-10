@@ -15,7 +15,8 @@ import Colors from '../../constants/Colors';
 import * as productActions from '../../store/actions/product';
 
 const ProductsOverviewScreen = props => {
-  const [isloading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState();
 
   const products = useSelector(state => state.products.availableProducts);
@@ -24,27 +25,30 @@ const ProductsOverviewScreen = props => {
 
   const loadProducts = useCallback(async () => {
     setError(null);
-    setIsLoading(true);
+    setIsRefreshing(true);
     try {
       await dispatch(productActions.fetchProducts());
     } catch (error) {
       setError(error.message);
     }
-    setIsLoading(false);
+    setIsRefreshing(false);
   }, [dispatch, setError, setIsLoading]);
 
-  useEffect(() => {
-    const willFocusSub = props.navigation.addListener(
-      'willFocus',
-      loadProducts
-    );
-    return () => {
-      willFocusSub.remove();
-    };
-  }, [loadProducts]);
+  // useEffect(() => {
+  //   const willFocusSub = props.navigation.addListener(
+  //     'willFocus',
+  //     loadProducts
+  //   );
+  //   return () => {
+  //     willFocusSub.remove();
+  //   };
+  // }, [loadProducts]);
 
   useEffect(() => {
-    loadProducts();
+    setIsLoading(true);
+    loadProducts().then(() => {
+      setIsLoading(false);
+    });
   }, [dispatch, loadProducts]);
 
   const selectItemHandler = (id, title) => {
@@ -67,7 +71,7 @@ const ProductsOverviewScreen = props => {
     );
   }
 
-  if (isloading) {
+  if (isLoading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={Colors.primary} />
@@ -75,7 +79,7 @@ const ProductsOverviewScreen = props => {
     );
   }
 
-  if (!isloading && products.length === 0) {
+  if (!isLoading && products.length === 0) {
     return (
       <View style={styles.centered}>
         <Text>No products found. Maybe start adding some!</Text>
@@ -85,6 +89,8 @@ const ProductsOverviewScreen = props => {
 
   return (
     <FlatList
+      onRefresh={loadProducts}
+      refreshing={isRefreshing}
       data={products}
       keyExtractor={item => item.id}
       renderItem={itemData => (
